@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -66,7 +67,7 @@ func randomJTI() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-func (s *JWTSigner) GenerateToken(userID, companyID, email string, roles []string) (string, error) {
+func (s *JWTSigner) GenerateToken(userID, companyID, email string, roles []string, publicKeyPath string) (string, error) {
 	now := time.Now().UTC()
 	exp := now.Add(s.ttl)
 
@@ -91,6 +92,24 @@ func (s *JWTSigner) GenerateToken(userID, companyID, email string, roles []strin
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+
+	if publicKeyPath == "" {
+		return "", errors.New("PUBLIC_KEY_PATH is not set")
+	}
+
+	pemBytes, err := os.ReadFile(publicKeyPath)
+	if err != nil {
+		return "", errors.New("cannot read PUBLIC_KEY_PATH")
+	}
+
+	pub, err := ParseRSAPublicKeyFromPEM(pemBytes)
+	if err != nil {
+		return "", errors.New("cannot read PEM")
+	}
+
+	// create JWK
+	jwk := JwkFromRSAPublicKey(pub, pemBytes)
+	token.Header["kid"] = jwk.Kid
 	signed, err := token.SignedString(s.privateKey)
 	if err != nil {
 		return "", fmt.Errorf("sign token: %w", err)

@@ -70,6 +70,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to init JWT signer: %v", err)
 	}
+	if err := auth.InitJWKS(); err != nil {
+		log.Fatalf("failed to init jwks: %v", err)
+	}
 	authHandler := auth.NewAuthHandler(userRepo, signer)
 
 	router := httpserver.NewRouter(cfg, contactHandler, companyHandler, uploaderConfigHandler, fileMetaHandler, authHandler)

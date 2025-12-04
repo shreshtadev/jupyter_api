@@ -121,6 +121,7 @@ func (h *Handler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 	resp := CreateCompanyResponse{
 		CompanyAPIKey: apiKey,
 		CompanySlug:   slug,
+		Features:      req.Features,
 		CreatedAt:     utils.GetShortDate(company.CreatedAt),
 	}
 

@@ -36,6 +36,7 @@ func NewRouter(config *config.Config, contactHandler *contact.Handler,
 		r.Post("/auth/login", authHandler.Login)
 		r.Post("/uploader/files", uploaderConfigHandler.GenerateUploadURL)
 		r.Post("/uploader/folders/delete", uploaderConfigHandler.DeleteFolder)
+		r.Get("/.well-known/jwks.json", authHandler.JWKSJson)
 		r.Group(func(r chi.Router) {
 			r.Use(authpkg.JWTMiddleware(jwtValidator))
 			r.Get("/auth/me", authHandler.Me)

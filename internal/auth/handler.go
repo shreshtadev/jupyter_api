@@ -3,7 +3,9 @@ package auth
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"os"
 
 	"shreshtasmg.in/jupyter/internal/user"
 	"shreshtasmg.in/jupyter/internal/utils"
@@ -104,7 +106,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	} else {
 		companyID = "" // superadmin has no company
 	}
-	token, err := h.signer.GenerateToken(u.ID, companyID, u.Email, roles)
+	publicKeyPath := os.Getenv("PUBLIC_KEY_PATH")
+	if publicKeyPath == "" {
+		log.Fatal("PUBLIC_KEY_PATH is not set")
+		return
+	}
+	token, err := h.signer.GenerateToken(u.ID, companyID, u.Email, roles, publicKeyPath)
 	if err != nil {
 		http.Error(w, "failed to generate token", http.StatusInternalServerError)
 		return
@@ -221,4 +228,8 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
+}
+
+func (h *AuthHandler) JWKSJson(w http.ResponseWriter, r *http.Request) {
+	JWKSHandler(w, r)
 }
