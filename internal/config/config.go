@@ -8,10 +8,8 @@ import (
 )
 
 type Config struct {
-	Addr           string // HTTP address
-	DSN            string // MySQL/MariaDB DSN
-	PrivateKeyPath string
-	PublicKeyPath  string
+	Addr string // HTTP address
+	DSN  string // MySQL/MariaDB DSN
 }
 
 func Load() *Config {
@@ -25,21 +23,9 @@ func Load() *Config {
 		log.Fatal("DB_DSN is required, e.g.: user:pass@tcp(localhost:3306)/dbname?parseTime=true&charset=utf8mb4&loc=Local")
 	}
 
-	privateKey := os.Getenv("PRIVATE_KEY_PATH")
-	if privateKey == "" {
-		log.Fatal("PRIVATE_KEY_PATH is required.")
-	}
-
-	publicKey := os.Getenv("PUBLIC_KEY_PATH")
-	if publicKey == "" {
-		log.Fatal("PUBLIC_KEY_PATH is required.")
-	}
-
 	return &Config{
-		Addr:           addr,
-		DSN:            dsn,
-		PrivateKeyPath: privateKey,
-		PublicKeyPath:  publicKey,
+		Addr: addr,
+		DSN:  dsn,
 	}
 }
 
