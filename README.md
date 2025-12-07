@@ -1,7 +1,7 @@
 
 # Jupyter API Services
 
-This repository contains the backend API services for the Jupyter platform, built with Go. It provides a robust and scalable backend architecture handle secure file uploads to AWS S3, alongside a flexible feature-flag system.
+This repository contains the backend API services for the Jupyter platform, built with Go. It provides a robust and scalable backend architecture handle secure file uploads to AWS S3.
 
 ## Features
 *   **Secure File Uploads:** Integration with AWS S3 for secure and efficient file storage, with company-specific bucket configurations.
