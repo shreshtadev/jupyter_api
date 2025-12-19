@@ -11,6 +11,7 @@ type Repository interface {
 	Create(c *Company) error
 	GetByAPIKey(apiKey string) (*Company, error)
 	GetByID(companyId string) (*Company, error)
+	GetBySlug(slug string) (*Company, error)
 	IncrementUsedQuota(companyID string, delta int64) error
 	ResetUsedQuota(companyID string) error
 }
@@ -30,6 +31,17 @@ func (r *repository) Create(c *Company) error {
 func (r *repository) GetByID(companyId string) (*Company, error) {
 	var c Company
 	if err := r.db.Where("company_id = ?", companyId).First(&c).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &c, nil
+}
+
+func (r *repository) GetBySlug(slug string) (*Company, error) {
+	var c Company
+	if err := r.db.Where("company_slug = ?", slug).First(&c).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}

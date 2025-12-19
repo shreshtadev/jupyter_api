@@ -3,6 +3,7 @@ package uploader
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"shreshtasmg.in/jupyter/internal/company"
+	"shreshtasmg.in/jupyter/internal/config"
 	"shreshtasmg.in/jupyter/internal/filemeta"
 	"shreshtasmg.in/jupyter/internal/utils"
 )
@@ -92,6 +94,16 @@ type ListFilesResponse struct {
 	NextToken *string  `json:"next_token,omitempty"`
 }
 
+type RegisterCompanyRequest struct {
+	CompanyName string `json:"company_name"`
+	StartDate   string `json:"start_date"`
+	EndDate     string `json:"end_date"`
+}
+
+type RegisterCompanyResponse struct {
+	CompanyApiKey string `json:"company_api_key"`
+}
+
 func sanitizeFileName(name string) string {
 	name = filepath.Base(name)
 	name = strings.ReplaceAll(name, " ", "_")
@@ -103,28 +115,132 @@ type Handler struct {
 	companyRepo  company.Repository
 	s3Service    S3Service
 	fileMetaRepo filemeta.Repository
+	configRepo   config.Repository
 }
 
-func NewHandler(repo Repository, companyRepo company.Repository, s3Service S3Service, fileMetaRepo filemeta.Repository) *Handler {
-	return &Handler{repo: repo, companyRepo: companyRepo, s3Service: s3Service, fileMetaRepo: fileMetaRepo}
+func NewHandler(repo Repository, companyRepo company.Repository, s3Service S3Service, fileMetaRepo filemeta.Repository, configRepo config.Repository) *Handler {
+	return &Handler{repo: repo, companyRepo: companyRepo, s3Service: s3Service, fileMetaRepo: fileMetaRepo, configRepo: configRepo}
 }
 
-// CreateUploaderConfig godoc
-// @Summary      Create uploader configuration
-// @Description  Creates a new uploader_config entry
-// @Tags         uploader
-// @Accept       json
-// @Produce      json
-// @Param        body  body      CreateUploaderConfigRequest  true  "Uploader config payload"
-// @Success      201   {object}  CreateUploaderConfigResponse
-// @Failure      400   {string}  string "invalid request"
-// @Failure      500   {string}  string "internal error"
-// @Router       /uploader/config [post]
+// @Summary Register a company
+// @Description Register a new company and generate an API key with dates of format DD-MM-YYYY
+// @Tags company
+// @Accept json
+// @Produce json
+// @Param request body RegisterCompanyRequest true "Register Company Request"
+// @Success 200 {object} RegisterCompanyResponse
+// @Failure 400 {string} string "Bad Request"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /company/register [post]
+func (h *Handler) RegisterCompany(w http.ResponseWriter, r *http.Request) {
+	var req RegisterCompanyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if req.CompanyName == "" {
+		http.Error(w, "company name is required", http.StatusBadRequest)
+		return
+	}
+	if req.StartDate == "" {
+		log.Println("start date is not provided, using current date")
+		req.StartDate = time.Now().Format("02-01-2006")
+	}
+	companySlug := utils.Slugify(req.CompanyName)
+	if foundCompany, err := h.companyRepo.GetBySlug(companySlug); err != nil {
+		http.Error(w, "database error", http.StatusInternalServerError)
+		return
+	} else if foundCompany != nil {
+		http.Error(w, "company already exists", http.StatusBadRequest)
+		return
+	}
+
+	foundActiveConfig, err := h.repo.FindActiveConfig()
+	if err != nil {
+		http.Error(w, "database error", http.StatusInternalServerError)
+		return
+	}
+
+	apiKey, err := utils.GenerateAPIKey()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	dateLayout := "02-01-2006"
+	startDate, err := time.Parse(dateLayout, req.StartDate)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	endDateFromReq := req.EndDate
+	if endDateFromReq == "" {
+		endDateFromReq = startDate.AddDate(1, 0, 0).Format(dateLayout)
+	}
+
+	endDate, endDateErr := time.Parse(dateLayout, endDateFromReq)
+	if endDateErr != nil {
+		http.Error(w, endDateErr.Error(), http.StatusBadRequest)
+		return
+	}
+	company := &company.Company{
+		ID:              utils.GenerateID(),
+		CompanyName:     req.CompanyName,
+		CompanySlug:     companySlug,
+		CompanyAPIKey:   apiKey,
+		AwsBucketName:   &foundActiveConfig.AwsBucketName,
+		AwsBucketRegion: &foundActiveConfig.AwsBucketRegion,
+		AwsAccessKey:    &foundActiveConfig.AwsAccessKey,
+		AwsSecretKey:    &foundActiveConfig.AwsSecretKey,
+		TotalUsageQuota: utils.ToInt64Ptr(foundActiveConfig.DefaultQuota),
+		UsedQuota:       0,
+		StartDate:       &startDate,
+		EndDate:         &endDate,
+	}
+
+	if err := h.companyRepo.Create(company); err != nil {
+		http.Error(w, "database error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(RegisterCompanyResponse{CompanyApiKey: apiKey})
+}
+
 func (h *Handler) CreateUploaderConfig(w http.ResponseWriter, r *http.Request) {
 	var req CreateUploaderConfigRequest
 
+	clientId := r.Header.Get("client_id")
+	clientSecret := r.Header.Get("client_secret")
+
+	if clientId == "" || clientSecret == "" {
+		http.Error(w, "Invalid Client Credentials", http.StatusBadRequest)
+		return
+	}
+
+	adminConfig, err := h.configRepo.FindBy(clientId, clientSecret)
+	if err != nil {
+		http.Error(w, "database error", http.StatusInternalServerError)
+		return
+	}
+	if adminConfig == nil {
+		http.Error(w, "cannot find the client credentials", http.StatusNotFound)
+		return
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	foundActiveConfig, err := h.repo.FindActiveConfig()
+	if err != nil {
+		http.Error(w, "database error", http.StatusInternalServerError)
+		return
+	}
+
+	if foundActiveConfig != nil {
+		http.Error(w, "another config is already active", http.StatusBadRequest)
 		return
 	}
 

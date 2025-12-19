@@ -1,109 +1,10 @@
 basePath: /api/v1
 definitions:
-  auth.LoginRequest:
+  contactus.CreateContactUsRequest:
     properties:
-      email:
+      contact_email:
         type: string
-      password:
-        type: string
-    type: object
-  auth.LoginResponse:
-    properties:
-      access_token:
-        type: string
-      company_id:
-        type: string
-      email:
-        type: string
-      expires_in:
-        description: seconds
-        type: integer
-      roles:
-        items:
-          type: string
-        type: array
-      token_type:
-        description: '"Bearer"'
-        type: string
-      user_id:
-        type: string
-    type: object
-  auth.MeResponse:
-    properties:
-      company_id:
-        type: string
-      email:
-        type: string
-      roles:
-        items:
-          type: string
-        type: array
-      user_id:
-        type: string
-    type: object
-  auth.RegisterRequest:
-    properties:
-      company_id:
-        type: string
-      email:
-        type: string
-      password:
-        type: string
-      role:
-        description: '"admin" or "user"'
-        type: string
-    type: object
-  auth.RegisterResponse:
-    properties:
-      company_id:
-        type: string
-      email:
-        type: string
-      role:
-        type: string
-      user_id:
-        type: string
-    type: object
-  company.CreateCompanyRequest:
-    properties:
-      aws_access_key:
-        type: string
-      aws_bucket_name:
-        type: string
-      aws_bucket_region:
-        type: string
-      aws_secret_key:
-        type: string
-      company_name:
-        type: string
-      end_date:
-        type: string
-      features:
-        items:
-          type: string
-        type: array
-      start_date:
-        description: '"YYYY-MM-DD"'
-        type: string
-      total_usage_quota:
-        type: integer
-    type: object
-  company.CreateCompanyResponse:
-    properties:
-      company_api_key:
-        type: string
-      company_slug:
-        type: string
-      created_at:
-        type: string
-      features:
-        items:
-          type: string
-        type: array
-    type: object
-  contact.CreateContactRequest:
-    properties:
-      email_address:
+      contact_number:
         type: string
       full_name:
         type: string
@@ -112,54 +13,11 @@ definitions:
       project_type:
         type: string
     type: object
-  contact.CreateContactResponse:
+  contactus.CreateContactUsResponse:
     properties:
-      created_at:
+      createdAt:
         type: string
-      email_address:
-        type: string
-    type: object
-  filemeta.CreateFileMetaRequest:
-    properties:
-      company_id:
-        description: can be nil if not tied to a company
-        type: string
-      file_key:
-        description: required (e.g. S3 key)
-        type: string
-      file_name:
-        type: string
-      file_size:
-        description: required
-        type: integer
-      file_txn_meta:
-        type: string
-      file_txn_type:
-        description: required (e.g. 1=upload,2=delete, etc.)
-        type: integer
-    type: object
-  filemeta.CreateFileMetaResponse:
-    properties:
-      id:
-        type: string
-    type: object
-  filemeta.FileMetaResponse:
-    properties:
-      company_id:
-        type: string
-      created_at:
-        type: string
-      file_key:
-        type: string
-      file_name:
-        type: string
-      file_size:
-        type: integer
-      file_txn_meta:
-        type: string
-      file_txn_type:
-        type: integer
-      id:
+      msg:
         type: string
     type: object
   uploader.CompanyFileMetaItem:
@@ -177,28 +35,6 @@ definitions:
       file_txn_type:
         type: integer
       id:
-        type: string
-    type: object
-  uploader.CreateUploaderConfigRequest:
-    properties:
-      aws_access_key:
-        type: string
-      aws_bucket_name:
-        type: string
-      aws_bucket_region:
-        type: string
-      aws_secret_key:
-        type: string
-      default_quota:
-        type: integer
-      is_active:
-        type: integer
-      total_quota:
-        type: integer
-    type: object
-  uploader.CreateUploaderConfigResponse:
-    properties:
-      created_at:
         type: string
     type: object
   uploader.DeleteFileRequest:
@@ -268,13 +104,18 @@ definitions:
       used_quota:
         type: integer
     type: object
-  uploader.ListFoldersResponse:
+  uploader.RegisterCompanyRequest:
     properties:
-      items:
-        items:
-          type: string
-        type: array
-      next_token:
+      company_name:
+        type: string
+      end_date:
+        type: string
+      start_date:
+        type: string
+    type: object
+  uploader.RegisterCompanyResponse:
+    properties:
+      company_api_key:
         type: string
     type: object
 host: localhost:9393
@@ -284,110 +125,56 @@ info:
   title: Jupyter API
   version: 1.0.0
 paths:
-  /auth/login:
+  /company/register:
     post:
       consumes:
       - application/json
-      description: Validates credentials and returns a JWT access token
+      description: Register a new company and generate an API key with dates of format
+        DD-MM-YYYY
       parameters:
-      - description: Login payload
+      - description: Register Company Request
         in: body
-        name: body
+        name: request
         required: true
         schema:
-          $ref: '#/definitions/auth.LoginRequest'
+          $ref: '#/definitions/uploader.RegisterCompanyRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/auth.LoginResponse'
+            $ref: '#/definitions/uploader.RegisterCompanyResponse'
         "400":
-          description: invalid request
-          schema:
-            type: string
-        "401":
-          description: invalid credentials
+          description: Bad Request
           schema:
             type: string
         "500":
-          description: internal error
+          description: Internal Server Error
           schema:
             type: string
-      summary: Login with email and password
+      summary: Register a company
       tags:
-      - auth
-  /auth/me:
-    get:
-      description: Returns user_id, company_id, email and roles from the access token
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/auth.MeResponse'
-        "401":
-          description: unauthorized
-          schema:
-            type: string
-      summary: Get current user info from JWT
-      tags:
-      - auth
-  /auth/register:
+      - company
+  /contactus:
     post:
       consumes:
       - application/json
-      description: Creates a user with Argon2 password hash
+      description: Creates a new contact_us entry
       parameters:
-      - description: Register payload
+      - description: ContactUs payload
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/auth.RegisterRequest'
+          $ref: '#/definitions/contactus.CreateContactUsRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/auth.RegisterResponse'
-        "400":
-          description: invalid request
-          schema:
-            type: string
-        "409":
-          description: email already exists
-          schema:
-            type: string
-        "500":
-          description: internal error
-          schema:
-            type: string
-      summary: Register a new user
-      tags:
-      - auth
-  /companies:
-    post:
-      consumes:
-      - application/json
-      description: Creates a company with automatically generated API key & slug
-      parameters:
-      - description: Company payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/company.CreateCompanyRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/company.CreateCompanyResponse'
+            $ref: '#/definitions/contactus.CreateContactUsResponse'
         "400":
           description: invalid request
           schema:
@@ -396,126 +183,9 @@ paths:
           description: internal error
           schema:
             type: string
-      summary: Create a company
+      summary: Create contact us
       tags:
-      - companies
-  /contact-us:
-    post:
-      consumes:
-      - application/json
-      description: Stores a contact-us form submission
-      parameters:
-      - description: Contact request
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/contact.CreateContactRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/contact.CreateContactResponse'
-        "400":
-          description: invalid request
-          schema:
-            type: string
-        "500":
-          description: internal server error
-          schema:
-            type: string
-      summary: Create a contact-us entry
-      tags:
-      - contact
-  /files/meta:
-    post:
-      consumes:
-      - application/json
-      description: Stores metadata for a file transaction (e.g. upload to S3)
-      parameters:
-      - description: File meta payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/filemeta.CreateFileMetaRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/filemeta.CreateFileMetaResponse'
-        "400":
-          description: invalid request
-          schema:
-            type: string
-        "500":
-          description: internal error
-          schema:
-            type: string
-      summary: Create file metadata
-      tags:
-      - files
-  /files/meta/{id}:
-    get:
-      description: Fetch a single files_meta row by its ID
-      parameters:
-      - description: File ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/filemeta.FileMetaResponse'
-        "404":
-          description: not found
-          schema:
-            type: string
-        "500":
-          description: internal error
-          schema:
-            type: string
-      summary: Get file meta by ID
-      tags:
-      - files
-  /uploader/config:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new uploader_config entry
-      parameters:
-      - description: Uploader config payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/uploader.CreateUploaderConfigRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/uploader.CreateUploaderConfigResponse'
-        "400":
-          description: invalid request
-          schema:
-            type: string
-        "500":
-          description: internal error
-          schema:
-            type: string
-      summary: Create uploader configuration
-      tags:
-      - uploader
+      - contactus
   /uploader/files:
     get:
       description: Uses X-API-Key to identify company and returns its files_meta records
@@ -630,46 +300,6 @@ paths:
       summary: Delete a single file by key
       tags:
       - uploader
-  /uploader/folders:
-    get:
-      description: Uses X-API-Key to identify company and returns a paginated list
-        of folder prefixes under the company slug
-      parameters:
-      - description: Company API key
-        in: header
-        name: X-API-Key
-        required: true
-        type: string
-      - description: Folder prefix (relative to company root) e.g. 'invoices/2023'
-        in: query
-        name: prefix
-        type: string
-      - description: Max number of items (default 100)
-        in: query
-        name: limit
-        type: integer
-      - description: Continuation token for pagination
-        in: query
-        name: next_token
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/uploader.ListFoldersResponse'
-        "401":
-          description: unauthorized
-          schema:
-            type: string
-        "500":
-          description: internal error
-          schema:
-            type: string
-      summary: List folders (prefixes) in S3 for the calling company
-      tags:
-      - uploader
   /uploader/folders/delete:
     post:
       consumes:
@@ -708,51 +338,6 @@ paths:
           schema:
             type: string
       summary: Delete all files under a folder (prefix)
-      tags:
-      - uploader
-  /uploader/folders/files:
-    get:
-      description: Uses X-API-Key to identify company and returns files under a specific
-        folder prefix
-      parameters:
-      - description: Company API key
-        in: header
-        name: X-API-Key
-        required: true
-        type: string
-      - description: Folder prefix (relative to company root)
-        in: query
-        name: folder
-        required: true
-        type: string
-      - description: Max number of items (default 50)
-        in: query
-        name: limit
-        type: integer
-      - description: Offset for pagination (default 0)
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/uploader.ListCompanyFilesResponse'
-        "400":
-          description: invalid request
-          schema:
-            type: string
-        "401":
-          description: unauthorized
-          schema:
-            type: string
-        "500":
-          description: internal error
-          schema:
-            type: string
-      summary: List files in a specific folder
       tags:
       - uploader
 swagger: "2.0"

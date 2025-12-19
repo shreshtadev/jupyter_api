@@ -46,3 +46,7 @@ func GetShortDate(currTime time.Time) string {
 	shortDateLayout := "Mon 02-Jan-06 2006"
 	return currTime.Format(shortDateLayout)
 }
+
+func ToInt64Ptr(v int64) *int64 {
+	return &v
+}

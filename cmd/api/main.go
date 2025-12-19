@@ -13,6 +13,7 @@ import (
 	_ "shreshtasmg.in/jupyter/docs"
 	"shreshtasmg.in/jupyter/internal/company"
 	"shreshtasmg.in/jupyter/internal/config"
+	"shreshtasmg.in/jupyter/internal/contactus"
 	"shreshtasmg.in/jupyter/internal/database"
 	"shreshtasmg.in/jupyter/internal/filemeta"
 	"shreshtasmg.in/jupyter/internal/httpserver"
@@ -29,10 +30,14 @@ func main() {
 	companyRepo := company.NewRepository(db)
 	uploaderRepo := uploader.NewRepository(db)
 	fileMetaRepo := filemeta.NewRepository(db)
+	configRepo := config.NewRepository(db)
+	contactusRepo := contactus.NewRepository(db)
 	s3Service := uploader.NewS3Service()
-	uploaderConfigHandler := uploader.NewHandler(uploaderRepo, companyRepo, s3Service, fileMetaRepo)
+	uploaderConfigHandler := uploader.NewHandler(uploaderRepo, companyRepo, s3Service, fileMetaRepo, configRepo)
+	configHandler := config.NewHandler(configRepo)
+	contactusHandler := contactus.NewHandler(contactusRepo)
 
-	router := httpserver.NewRouter(cfg, uploaderConfigHandler)
+	router := httpserver.NewRouter(cfg, uploaderConfigHandler, contactusHandler, configHandler)
 
 	log.Printf("starting HTTP server on %s", cfg.Addr)
 	if err := http.ListenAndServe(cfg.Addr, router); err != nil {

@@ -9,9 +9,9 @@
     "host": "localhost:9393",
     "basePath": "/api/v1",
     "paths": {
-        "/auth/login": {
+        "/company/register": {
             "post": {
-                "description": "Validates credentials and returns a JWT access token",
+                "description": "Register a new company and generate an API key with dates of format DD-MM-YYYY",
                 "consumes": [
                     "application/json"
                 ],
@@ -19,17 +19,17 @@
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "company"
                 ],
-                "summary": "Login with email and password",
+                "summary": "Register a company",
                 "parameters": [
                     {
-                        "description": "Login payload",
-                        "name": "body",
+                        "description": "Register Company Request",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.LoginRequest"
+                            "$ref": "#/definitions/uploader.RegisterCompanyRequest"
                         }
                     }
                 ],
@@ -37,23 +37,17 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/auth.LoginResponse"
+                            "$ref": "#/definitions/uploader.RegisterCompanyResponse"
                         }
                     },
                     "400": {
-                        "description": "invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "invalid credentials",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "internal error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "string"
                         }
@@ -61,35 +55,9 @@
                 }
             }
         },
-        "/auth/me": {
-            "get": {
-                "description": "Returns user_id, company_id, email and roles from the access token",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Get current user info from JWT",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/auth.MeResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "unauthorized",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/register": {
+        "/contactus": {
             "post": {
-                "description": "Creates a user with Argon2 password hash",
+                "description": "Creates a new contact_us entry",
                 "consumes": [
                     "application/json"
                 ],
@@ -97,17 +65,17 @@
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "contactus"
                 ],
-                "summary": "Register a new user",
+                "summary": "Create contact us",
                 "parameters": [
                     {
-                        "description": "Register payload",
+                        "description": "ContactUs payload",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.RegisterRequest"
+                            "$ref": "#/definitions/contactus.CreateContactUsRequest"
                         }
                     }
                 ],
@@ -115,238 +83,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/auth.RegisterResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "409": {
-                        "description": "email already exists",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "internal error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/companies": {
-            "post": {
-                "description": "Creates a company with automatically generated API key \u0026 slug",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "companies"
-                ],
-                "summary": "Create a company",
-                "parameters": [
-                    {
-                        "description": "Company payload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/company.CreateCompanyRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/company.CreateCompanyResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "internal error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/contact-us": {
-            "post": {
-                "description": "Stores a contact-us form submission",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "contact"
-                ],
-                "summary": "Create a contact-us entry",
-                "parameters": [
-                    {
-                        "description": "Contact request",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/contact.CreateContactRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/contact.CreateContactResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "internal server error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/files/meta": {
-            "post": {
-                "description": "Stores metadata for a file transaction (e.g. upload to S3)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "files"
-                ],
-                "summary": "Create file metadata",
-                "parameters": [
-                    {
-                        "description": "File meta payload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/filemeta.CreateFileMetaRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/filemeta.CreateFileMetaResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "internal error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/files/meta/{id}": {
-            "get": {
-                "description": "Fetch a single files_meta row by its ID",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "files"
-                ],
-                "summary": "Get file meta by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "File ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/filemeta.FileMetaResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "not found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "internal error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/uploader/config": {
-            "post": {
-                "description": "Creates a new uploader_config entry",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "uploader"
-                ],
-                "summary": "Create uploader configuration",
-                "parameters": [
-                    {
-                        "description": "Uploader config payload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/uploader.CreateUploaderConfigRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/uploader.CreateUploaderConfigResponse"
+                            "$ref": "#/definitions/contactus.CreateContactUsResponse"
                         }
                     },
                     "400": {
@@ -533,65 +270,6 @@
                 }
             }
         },
-        "/uploader/folders": {
-            "get": {
-                "description": "Uses X-API-Key to identify company and returns a paginated list of folder prefixes under the company slug",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "uploader"
-                ],
-                "summary": "List folders (prefixes) in S3 for the calling company",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Company API key",
-                        "name": "X-API-Key",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Folder prefix (relative to company root) e.g. 'invoices/2023'",
-                        "name": "prefix",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Max number of items (default 100)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Continuation token for pagination",
-                        "name": "next_token",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/uploader.ListFoldersResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "unauthorized",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "internal error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
         "/uploader/folders/delete": {
             "post": {
                 "description": "Deletes all objects under folder_prefix for the authenticated company and records a files_meta entry with file_txn_type=3",
@@ -650,232 +328,16 @@
                     }
                 }
             }
-        },
-        "/uploader/folders/files": {
-            "get": {
-                "description": "Uses X-API-Key to identify company and returns files under a specific folder prefix",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "uploader"
-                ],
-                "summary": "List files in a specific folder",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Company API key",
-                        "name": "X-API-Key",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Folder prefix (relative to company root)",
-                        "name": "folder",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Max number of items (default 50)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset for pagination (default 0)",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/uploader.ListCompanyFilesResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "unauthorized",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "internal error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "auth.LoginRequest": {
+        "contactus.CreateContactUsRequest": {
             "type": "object",
             "properties": {
-                "email": {
+                "contact_email": {
                     "type": "string"
                 },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.LoginResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "company_id": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "expires_in": {
-                    "description": "seconds",
-                    "type": "integer"
-                },
-                "roles": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "token_type": {
-                    "description": "\"Bearer\"",
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.MeResponse": {
-            "type": "object",
-            "properties": {
-                "company_id": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "roles": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.RegisterRequest": {
-            "type": "object",
-            "properties": {
-                "company_id": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "role": {
-                    "description": "\"admin\" or \"user\"",
-                    "type": "string"
-                }
-            }
-        },
-        "auth.RegisterResponse": {
-            "type": "object",
-            "properties": {
-                "company_id": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "company.CreateCompanyRequest": {
-            "type": "object",
-            "properties": {
-                "aws_access_key": {
-                    "type": "string"
-                },
-                "aws_bucket_name": {
-                    "type": "string"
-                },
-                "aws_bucket_region": {
-                    "type": "string"
-                },
-                "aws_secret_key": {
-                    "type": "string"
-                },
-                "company_name": {
-                    "type": "string"
-                },
-                "end_date": {
-                    "type": "string"
-                },
-                "features": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "start_date": {
-                    "description": "\"YYYY-MM-DD\"",
-                    "type": "string"
-                },
-                "total_usage_quota": {
-                    "type": "integer"
-                }
-            }
-        },
-        "company.CreateCompanyResponse": {
-            "type": "object",
-            "properties": {
-                "company_api_key": {
-                    "type": "string"
-                },
-                "company_slug": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "features": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "contact.CreateContactRequest": {
-            "type": "object",
-            "properties": {
-                "email_address": {
+                "contact_number": {
                     "type": "string"
                 },
                 "full_name": {
@@ -889,77 +351,13 @@
                 }
             }
         },
-        "contact.CreateContactResponse": {
+        "contactus.CreateContactUsResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
-                "email_address": {
-                    "type": "string"
-                }
-            }
-        },
-        "filemeta.CreateFileMetaRequest": {
-            "type": "object",
-            "properties": {
-                "company_id": {
-                    "description": "can be nil if not tied to a company",
-                    "type": "string"
-                },
-                "file_key": {
-                    "description": "required (e.g. S3 key)",
-                    "type": "string"
-                },
-                "file_name": {
-                    "type": "string"
-                },
-                "file_size": {
-                    "description": "required",
-                    "type": "integer"
-                },
-                "file_txn_meta": {
-                    "type": "string"
-                },
-                "file_txn_type": {
-                    "description": "required (e.g. 1=upload,2=delete, etc.)",
-                    "type": "integer"
-                }
-            }
-        },
-        "filemeta.CreateFileMetaResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                }
-            }
-        },
-        "filemeta.FileMetaResponse": {
-            "type": "object",
-            "properties": {
-                "company_id": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "file_key": {
-                    "type": "string"
-                },
-                "file_name": {
-                    "type": "string"
-                },
-                "file_size": {
-                    "type": "integer"
-                },
-                "file_txn_meta": {
-                    "type": "string"
-                },
-                "file_txn_type": {
-                    "type": "integer"
-                },
-                "id": {
+                "msg": {
                     "type": "string"
                 }
             }
@@ -986,40 +384,6 @@
                     "type": "integer"
                 },
                 "id": {
-                    "type": "string"
-                }
-            }
-        },
-        "uploader.CreateUploaderConfigRequest": {
-            "type": "object",
-            "properties": {
-                "aws_access_key": {
-                    "type": "string"
-                },
-                "aws_bucket_name": {
-                    "type": "string"
-                },
-                "aws_bucket_region": {
-                    "type": "string"
-                },
-                "aws_secret_key": {
-                    "type": "string"
-                },
-                "default_quota": {
-                    "type": "integer"
-                },
-                "is_active": {
-                    "type": "integer"
-                },
-                "total_quota": {
-                    "type": "integer"
-                }
-            }
-        },
-        "uploader.CreateUploaderConfigResponse": {
-            "type": "object",
-            "properties": {
-                "created_at": {
                     "type": "string"
                 }
             }
@@ -1126,16 +490,24 @@
                 }
             }
         },
-        "uploader.ListFoldersResponse": {
+        "uploader.RegisterCompanyRequest": {
             "type": "object",
             "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "company_name": {
+                    "type": "string"
                 },
-                "next_token": {
+                "end_date": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "uploader.RegisterCompanyResponse": {
+            "type": "object",
+            "properties": {
+                "company_api_key": {
                     "type": "string"
                 }
             }
