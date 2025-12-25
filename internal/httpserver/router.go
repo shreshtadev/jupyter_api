@@ -33,7 +33,8 @@ func NewRouter(config *config.Config,
 		r.Post("/company/register", uploaderConfigHandler.RegisterCompany)
 		r.Post("/config/storage", uploaderConfigHandler.CreateUploaderConfig)
 		r.Post("/contactus", contactUsHandler.CreateContactUs)
-		r.Post("/config/adminclient", configHandler.CreateAdminClient)
+		r.Post("/config/adminclient/new", configHandler.CreateAdminClient)
+		r.Post("/config/adminclient/validate", configHandler.ValidateAdminClient)
 	})
 
 	return r
